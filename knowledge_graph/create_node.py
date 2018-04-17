@@ -1,18 +1,10 @@
 #! python3
 # -*- coding: utf-8 -*-
-from pymongo import MongoClient
 import xml.etree.cElementTree as Et
-from py2neo import Graph, Node, Relationship
-from collections import Counter
+from py2neo import Node
 from fnvhash import fnv1_32
-
-# mongodb配置
-client = MongoClient('localhost', 27017)
-db = client['knowledge_graph']
-figure_graph_info = db['figure_graph_info']
-
-# neo4j配置
-knowledge_graph = Graph('http://localhost:7474', username='knowledge_graph', password='1234')
+from analyze_node import count_nonzero_leaf
+from config import figure_graph_info, knowledge_graph
 
 
 def create_root_node():
@@ -37,12 +29,22 @@ def create_root_node():
             graph.commit()
 
 
-def create_leaf_zero_node():
+def create_nonzero_leaf_node():
     """
-    1. 首先叶子结点中不为'0'的结点肯定已经在根结点中了
-    2. 那么只需要去创建id为'0'的结点就可以了
-    3. 但id为'0'的结点由于id都是相同的，首先要根据名字去重，然后再创建独特的id
-    4. 如果原本的id不为'0', 则id信息不变， 如果原本id为'0'，则将id更新过后保存到mongodb中
+    1. 创建之前发现的id不为0而且不在根结点中的叶子结点
+    :return:
+    """
+    nonzero_leaf = count_nonzero_leaf()
+    for element in nonzero_leaf:
+        graph = knowledge_graph.begin()
+        leaf = Node("Person", name=element['name'], id=element['id'])
+        graph.create(leaf)
+        graph.commit()
+
+
+def create_zero_leaf_node():
+    """
+    1. 创建id为0的叶子结点
     :return:
     """
     unique = set()
@@ -72,36 +74,10 @@ def create_leaf_zero_node():
                     # 增加一个新的字段fake,为了标识网页新增进来的结点
                     graph.create(leaf)
                     graph.commit()
-                    unique.add(leaf_name)
-
-
-def create_relationship():
-    """
-    1. 创建完了所有的具有独特id的结点后开始建立连接
-    2. 遍历xml的结点关系，通过查根结点的id与叶子结点的id建立关系
-    3. 去mongodb中顺序查找根结点，去查图形数据库，然后先找到根结点，再去找叶子结点，创建关系
-    :return:
-    """
-    for record in figure_graph_info.find():
-        graph = knowledge_graph.begin()
-        tree_xml = record['tree']
-        tree = Et.fromstring(tree_xml)
-
-        for node in tree.iter(tag='USER'):
-            center_dict = node.attrib
-            root_id = center_dict['id']
-            knowledge_graph.find_one(label='Person', property_key='id', property_value=root_id)
-
-        for node in tree.iter(tag='Item'):
-            fringe_dict = node.attrib
-            if fringe_dict:
-                leaf_name = fringe_dict['name']
-                knowledge_graph.find_one(label='Person', property_key='name', property_value=leaf_name)
-                contact = fringe_dict['Contact']
-                link = Relationship()
+                unique.add(leaf_name)
 
 
 if __name__ == '__main__':
     create_root_node()
-    print('-----------------------')
-    create_leaf_zero_node()
+    create_nonzero_leaf_node()
+    create_zero_leaf_node()
