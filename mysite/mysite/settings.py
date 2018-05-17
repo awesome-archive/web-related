@@ -49,9 +49,12 @@ HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
         'URL': 'http://127.0.0.1:9200/',
-        'INDEX_NAME': 'haystack',
+        'INDEX_NAME': 'blog_search',
     },
 }
+
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,7 +71,7 @@ ROOT_URLCONF = 'mysite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

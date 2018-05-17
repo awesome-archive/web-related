@@ -1,5 +1,6 @@
 from django import forms
 from .models import Comment
+from haystack.forms import SearchForm
 
 
 class EmailPostForm(forms.Form):
@@ -19,7 +20,7 @@ class CommentForm(forms.ModelForm):
         fields = ('name', 'email', 'body')
 
 
-class SearchForm(forms.Form):
-    query = forms.CharField()
+class BlogSearchForm(SearchForm):
+    def no_query_found(self):
+        return self.searchqueryset.all()
 
-    
