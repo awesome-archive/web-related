@@ -42,9 +42,6 @@ class Post(models.Model):
                                                  self.publish.strftime('%d'),
                                                  self.slug])
 
-    def get_brief_body(self):
-        return self.body[:100]
-
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)

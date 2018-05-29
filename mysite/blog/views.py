@@ -91,6 +91,13 @@ def post_share(request, post_id):
     return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
 
 
+# def post_search(request):
+#     form = BlogSearchForm(request.GET)  # 一定要将form传到html中，否则并不会将表单显示出来
+#     blogs = form.search()
+#     print(dir(blogs[0]))
+#     return render(request, 'search/search.html', {'blogs': blogs, 'form': form})
+
+
 def post_search(request):
     form = BlogSearchForm()
     cd = None
